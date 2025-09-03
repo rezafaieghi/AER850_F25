@@ -1,3 +1,4 @@
+# Here is the list of fruits.
 fruits = ["apple", "banana", "orange"]
 
 # Looping through a list
