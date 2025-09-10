@@ -50,3 +50,23 @@ strat_data_test = strat_data_test.drop(columns=["income_categories"], axis = 1)
 print(data.shape)
 print(strat_data_train.shape)
 print(strat_data_test.shape)
+
+
+corr_matrix = strat_data_train.corr()
+
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.heatmap(np.abs(corr_matrix))
+
+
+
+
+
+
+
+
+
+
+
