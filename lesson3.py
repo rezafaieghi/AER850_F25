@@ -91,63 +91,84 @@ X_test = X_test.drop(columns=['population'])
 X_test = X_test.drop(columns=['households'])
 
 
-# # Data scaling
-# # NOTE: If we want to K-fold cross validation, we should not be scale the data here.
-# # Applying standard scaler. Note that we generally apply this to numerical data, 
-# # however, applying it to one-hot encoded data does not break anything since they
-# # are only 0s and 1s.
-# from sklearn.preprocessing import StandardScaler
-# sc = StandardScaler()
-# sc.fit(X_train)
-# X_train = sc.transform(X_train)
+# Data scaling
+# NOTE: If we want to K-fold cross validation, we should not be scale the data here.
+# Applying standard scaler. Note that we generally apply this to numerical data, 
+# however, applying it to one-hot encoded data does not break anything since they
+# are only 0s and 1s.
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+sc.fit(X_train)
 
-# # At this point, we can also scale X_test. This is safe to do so, because the 
-# # the standard scaler above has been fit to the train data only.
-# X_test = sc.transform(X_test)
+pd.DataFrame(X_train).to_csv("UnscaledOriginalData.csv")
+X_train = sc.transform(X_train)
+pd.DataFrame(X_train).to_csv("NowScaledData.csv")
+
+
+# At this point, we can also scale X_test. This is safe to do so, because the 
+# the standard scaler above has been fit to the train data only.
+X_test = sc.transform(X_test)
 
 
 
 # Training the first model, a linear regression model.
 from sklearn.linear_model import LinearRegression
-# mdl1 = LinearRegression()
-# mdl1.fit(X_train, y_train)
+mdl1 = LinearRegression()
+mdl1.fit(X_train, y_train)
 
 # Print predictions for the first few data points.
-# y_pred_train1 = mdl1.predict(X_train)
-# for i in range(5):
-#     print("Predictions:", y_pred_train1[i], "Actual values:", y_train[i])
+y_pred_train1 = mdl1.predict(X_train)
+for i in range(5):
+    print("Predictions:", y_pred_train1[i], "Actual values:", y_train[i])
 
 # Using metrics to evaluate the model.
 from sklearn.metrics import mean_absolute_error
-# mae_train1 = mean_absolute_error(y_pred_train1, y_train)
-# print("Model 1 training MAE is: ", round(mae_train1,2))
+mae_train1 = mean_absolute_error(y_pred_train1, y_train)
+print("Model 1 training MAE is: ", round(mae_train1,2))
 
 
 # Training the second model, a random forest model.
 from sklearn.ensemble import RandomForestRegressor
-# mdl2 = RandomForestRegressor(n_estimators=30, random_state=42)
-# mdl2.fit(X_train, y_train)
-# y_pred_train2 = mdl2.predict(X_train)
+mdl2 = RandomForestRegressor(n_estimators=100, random_state=42)
+mdl2.fit(X_train, y_train)
+y_pred_train2 = mdl2.predict(X_train)
 
-# # MAE for the second model
-# mae_train2 = mean_absolute_error(y_pred_train2, y_train)
-# print("Model 2 training MAE is: ", round(mae_train2,2))
+# MAE for the second model
+mae_train2 = mean_absolute_error(y_pred_train2, y_train)
+print("Model 2 training MAE is: ", round(mae_train2,2))
 
-# for i in range(5):
-#     print("Mode 1 Predictions:",
-#           round(y_pred_train1[i],2),
-#           "Mode 2 Predictions:",
-#           round(y_pred_train2[i],2),
-#           "Actual values:",
-#           round(y_train[i],2))
+for i in range(5):
+    print("Mode 1 Predictions:",
+          round(y_pred_train1[i],2),
+          "Mode 2 Predictions:",
+          round(y_pred_train2[i],2),
+          "Actual values:",
+          round(y_train[i],2))
+    
+y_pred_test1 = mdl1.predict(X_test)
+mae_test1 = mean_absolute_error(y_test, y_pred_test1)
+print("Model 1 Test MAE:", round(mae_test1, 2))
+
+y_pred_test2 = mdl2.predict(X_test)
+mae_test2 = mean_absolute_error(y_test, y_pred_test2)
+print("Model 2 Test MAE:", round(mae_test2, 2))
 
 # We better use k-fold cross validation for more robust evaluation.
 from sklearn.model_selection import cross_val_score
-# cv_scores_model1 = cross_val_score(mdl1, X_train, y_train, cv=5, scoring='neg_mean_absolute_error')
-# cv_mae1 = -cv_scores_model1.mean()
-# print("Model 1 Mean Absolute Error (CV):", round(cv_mae1, 2))
+cv_scores_model1 = cross_val_score(mdl1, X_train, y_train, cv=5, scoring='neg_mean_absolute_error')
+cv_mae1 = -cv_scores_model1.mean()
+print("Model 1 Mean Absolute Error (CV):", round(cv_mae1, 2))
 # # Note that there is data leak in this implementation, because the standard scaler
 # # is fit on the whole training data. We should use pipelines instead.
+
+# We better use k-fold cross validation for more robust evaluation.
+from sklearn.model_selection import cross_val_score
+cv_scores_model2 = cross_val_score(mdl2, X_train, y_train, cv=5, scoring='neg_mean_absolute_error')
+cv_mae2 = -cv_scores_model2.mean()
+print("Model 2 Mean Absolute Error (CV):", round(cv_mae2, 2))
+# # Note that there is data leak in this implementation, because the standard scaler
+# # is fit on the whole training data. We should use pipelines instead.
+
 
 # Pipeline
 from sklearn.pipeline import Pipeline
@@ -169,7 +190,7 @@ print("Model 1 Test MAE:", round(mae_test1, 2))
 
 pipeline2 = Pipeline([
     ('scaler', StandardScaler()),
-    ('model', RandomForestRegressor(n_estimators=50, random_state=42))])
+    ('model', RandomForestRegressor(n_estimators=100, random_state=42))])
 cv_scores2 = cross_val_score(pipeline2, X_train, y_train,
                             cv=5, scoring='neg_mean_absolute_error')
 cv_mae2 = -cv_scores2.mean()
@@ -187,28 +208,28 @@ print("Model 2 Test RMSE:", round(np.sqrt(mse_test2), 2))
 
 
 # Using grid search
-# from sklearn.model_selection import GridSearchCV, KFold
-# param_grid = {
-#     'model__n_estimators': [10, 30, 50],
-#     'model__max_depth': [None, 10, 20, 30],
-#     'model__min_samples_split': [2, 5, 10],
-#     'model__min_samples_leaf': [1, 2, 4],
-#     'model__max_features': ['sqrt', 'log2'],
-# }
-# cv = KFold(n_splits=5, shuffle=True, random_state=42)
-# grid = GridSearchCV(
-#     estimator=pipeline2,
-#     param_grid=param_grid,
-#     scoring='neg_mean_absolute_error',
-#     cv=cv,
-#     n_jobs=-1,
-#     refit=True,           
-#     verbose=1,
-#     return_train_score=True
-# )
-# grid.fit(X_train, y_train)
+from sklearn.model_selection import GridSearchCV, KFold
+param_grid = {
+    'model__n_estimators': [10, 30, 50],
+    'model__max_depth': [None, 10, 20, 30],
+    'model__min_samples_split': [2, 5, 10],
+    'model__min_samples_leaf': [1, 2, 4],
+    'model__max_features': ['sqrt', 'log2'],
+}
+cv = KFold(n_splits=5, shuffle=True, random_state=42)
+grid = GridSearchCV(
+    estimator=pipeline2,
+    param_grid=param_grid,
+    scoring='neg_mean_absolute_error',
+    cv=cv,
+    n_jobs=-1,
+    refit=True,           
+    verbose=1,
+    return_train_score=True
+)
+grid.fit(X_train, y_train)
 
-# print("Best CV MAE:", -grid.best_score_)
-# print("Best params:", grid.best_params_)
-# y_pred = grid.predict(X_test)
-# print("Test MAE:", mean_absolute_error(y_test, y_pred))
+print("Best CV MAE:", -grid.best_score_)
+print("Best params:", grid.best_params_)
+y_pred = grid.predict(X_test)
+print("Test MAE:", mean_absolute_error(y_test, y_pred))
