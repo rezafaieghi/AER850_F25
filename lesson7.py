@@ -29,7 +29,7 @@ x_val   = (x_val   / 255.0).astype("float32")
 x_test  = (x_test  / 255.0).astype("float32")
 
 # Set batch size and epochs
-BATCH_SIZE = 32 
+BATCH_SIZE = 50000 
 EPOCHS = 15
 
 
@@ -80,8 +80,8 @@ history1 = mdl1.fit(
     verbose=1
     )
 
-test_loss1, test_acc1 = mdl1.evaluate(x_test, y_test, verbose=0)
-print(f"Test accuracy: {test_acc1:.4f} | Test loss: {test_loss1:.4f}")
+test_loss, test_acc = mdl1.evaluate(x_test, y_test, verbose=0)
+print(f"Test accuracy: {test_acc:.4f} | Test loss: {test_loss:.4f}")
 
 plt.figure(figsize=(6,4))
 plt.plot(history1.history["accuracy"], label="Train Acc")
@@ -130,118 +130,33 @@ plt.show()
 
 
 
-# Build a deeper NN
-mdl2 = keras.Sequential([
-        layers.Flatten(input_shape=(28, 28)),
-        layers.Dense(256, activation="relu"),
-        layers.Dense(256, activation="relu"),
-        layers.Dense(128, activation="relu"),
-        layers.Dense(128, activation="relu"),
-        layers.Dense(64, activation="relu"),
-        layers.Dense(64, activation="relu"),
-        layers.Dense(32, activation="relu"),
-        layers.Dense(32, activation="relu"),
-        layers.Dropout(0.3),
-        layers.Dense(10, activation="softmax")
-        ])
-mdl2.compile(
-    optimizer=keras.optimizers.Adam(learning_rate=1e-3),
-    loss="sparse_categorical_crossentropy",
-    metrics=["accuracy"]
-    )
-history2 = mdl2.fit(
-    x_train, y_train,
-    validation_data=(x_val, y_val),
-    epochs=EPOCHS,
-    batch_size=BATCH_SIZE,
-    callbacks=[early_stop],
-    verbose=1
-    )
-test_loss2, test_acc2 = mdl2.evaluate(x_test, y_test, verbose=0)
-print(f"Test accuracy: {test_acc2:.4f} | Test loss: {test_loss2:.4f}")
-
-
-
-
-# ===============================
-# Lesson 8 topic: CNNs
-# ===============================
-
-# CNNs expect input with a channel dimension: (28, 28, 1)
-x_train_cnn = np.expand_dims(x_train, -1)
-x_val_cnn   = np.expand_dims(x_val, -1)
-x_test_cnn  = np.expand_dims(x_test, -1)
-
-# Build a simple CNN model
-mdl3 = keras.Sequential([
-    layers.Conv2D(32, (3,3), activation="relu", input_shape=(28, 28, 1)),
-    layers.MaxPooling2D((2,2)),
-    layers.Conv2D(64, (3,3), activation="relu"),
-    layers.MaxPooling2D((2,2)),
-    layers.Flatten(),
-    layers.Dense(64, activation="relu"),
-    layers.Dropout(0.3),
-    layers.Dense(10, activation="softmax")
-])
-
-mdl3.compile(
-    optimizer=keras.optimizers.Adam(learning_rate=1e-3),
-    loss="sparse_categorical_crossentropy",
-    metrics=["accuracy"]
-)
-
-history3 = mdl3.fit(
-    x_train_cnn, y_train,
-    validation_data=(x_val_cnn, y_val),
-    epochs=EPOCHS,
-    batch_size=BATCH_SIZE,
-    callbacks=[early_stop],
-    verbose=1
-)
-
-# Evaluate CNN model
-test_loss3, test_acc3 = mdl3.evaluate(x_test_cnn, y_test, verbose=0)
-print(f"Test accuracy: {test_acc3:.4f} | Test loss: {test_loss3:.4f}")
-
-# Plot results
-plt.figure(figsize=(6,4))
-plt.plot(history3.history["accuracy"], label="Train Acc")
-plt.plot(history3.history["val_accuracy"], label="Val Acc")
-plt.xlabel("Epoch")
-plt.ylabel("Accuracy")
-plt.title("CNN Accuracy vs Epoch")
-plt.legend()
-plt.grid(True)
-plt.show()
-
-plt.figure(figsize=(6,4))
-plt.plot(history3.history["loss"], label="Train Loss")
-plt.plot(history3.history["val_loss"], label="Val Loss")
-plt.xlabel("Epoch")
-plt.ylabel("Loss")
-plt.title("CNN Loss vs Epoch")
-plt.legend()
-plt.grid(True)
-plt.show()
-
-# Predict and visualize
-pred_probs = mdl3.predict(x_test_cnn[:8])
-pred_labels = np.argmax(pred_probs, axis=1)
-true_labels = y_test[:8]
-print("Predicted labels:", pred_labels)
-print("True labels     :", true_labels)
-
-plt.figure(figsize=(10, 3))
-for i in range(8):
-    plt.subplot(2, 4, i + 1)
-    plt.imshow(x_test[i], cmap="gray")
-    plt.axis("off")
-    color = "green" if pred_labels[i] == true_labels[i] else "red"
-    plt.title(f"P:{pred_labels[i]} / T:{true_labels[i]}", color=color)
-plt.suptitle("CNN Model Predictions on Test Samples", fontsize=14)
-plt.tight_layout()
-plt.show()
-
-
-
+# # Build a deeper NN
+# mdl2 = keras.Sequential([
+#         layers.Flatten(input_shape=(28, 28)),
+#         layers.Dense(256, activation="relu"),
+#         layers.Dense(256, activation="relu"),
+#         layers.Dense(128, activation="relu"),
+#         layers.Dense(128, activation="relu"),
+#         layers.Dense(64, activation="relu"),
+#         layers.Dense(64, activation="relu"),
+#         layers.Dense(32, activation="relu"),
+#         layers.Dense(32, activation="relu"),
+#         layers.Dropout(0.3),
+#         layers.Dense(10, activation="softmax")
+#         ])
+# mdl2.compile(
+#     optimizer=keras.optimizers.Adam(learning_rate=1e-3),
+#     loss="sparse_categorical_crossentropy",
+#     metrics=["accuracy"]
+#     )
+# history2 = mdl2.fit(
+#     x_train, y_train,
+#     validation_data=(x_val, y_val),
+#     epochs=EPOCHS,
+#     batch_size=BATCH_SIZE,
+#     callbacks=[early_stop],
+#     verbose=1
+#     )
+# test_loss, test_acc = mdl2.evaluate(x_test, y_test, verbose=0)
+# print(f"Test accuracy: {test_acc:.4f} | Test loss: {test_loss:.4f}")
 
